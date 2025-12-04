@@ -1,0 +1,66 @@
+import express from "express";
+import User from "../models/User.js";
+
+
+const router = express.Router();
+
+
+// REGISTER
+router.post("/register", async (req, res) => {
+try {
+const { username, password } = req.body;
+if (!username || !password)
+return res.json({ success: false, message: "Missing fields" });
+
+
+const exists = await User.findOne({ username });
+if (exists) return res.json({ success: false, message: "User exists" });
+
+
+const user = await User.create({ username, password });
+return res.json({ success: true, user: { username: user.username } });
+} catch (err) {
+console.error(err);
+return res.status(500).json({ success: false });
+}
+});
+
+
+// LOGIN
+router.post("/login", async (req, res) => {
+try {
+const { username, password } = req.body;
+if (!username || !password)
+return res.json({ success: false, message: "Missing fields" });
+
+
+const user = await User.findOne({ username });
+if (!user) return res.json({ success: false, message: "No user" });
+
+
+if (user.password !== password)
+return res.json({ success: false, message: "Invalid credentials" });
+
+
+// remove sensitive fields before returning
+const safe = {
+username: user.username,
+fullName: user.fullName,
+email: user.email,
+phone: user.phone,
+classYear: user.classYear,
+dob: user.dob,
+age: user.age,
+avatar: user.avatar,
+};
+
+
+return res.json({ success: true, user: safe });
+} catch (err) {
+console.error(err);
+return res.status(500).json({ success: false });
+}
+});
+
+
+export default router;
