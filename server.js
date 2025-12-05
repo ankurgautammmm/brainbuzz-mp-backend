@@ -15,7 +15,7 @@ import jwt from "jsonwebtoken";
 import Groq from "groq-sdk";
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY, // FIXED (Q not K)
+  apiKey: process.env.GROK_API_KEY,
 });
 
 // ----------------------------------------
@@ -257,3 +257,4 @@ Language: ${languageNote}.
 app.listen(PORT, () =>
   console.log(`✔ Server running at http://localhost:${PORT}`)
 );
+
