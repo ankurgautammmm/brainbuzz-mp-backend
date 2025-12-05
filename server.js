@@ -70,7 +70,7 @@ app.get("/", (req, res) => {
 app.get("/test-groq", async (req, res) => {
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "mixtral-8x7b-32768",
       messages: [{ role: "user", content: "Say hello" }],
     });
 
@@ -222,6 +222,7 @@ Language: ${languageNote}
 // START SERVER
 // ----------------------------------------
 app.listen(PORT, () => console.log(`✔ Server running at http://localhost:${PORT}`));
+
 
 
 
