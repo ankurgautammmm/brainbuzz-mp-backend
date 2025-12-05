@@ -15,7 +15,7 @@ import jwt from "jsonwebtoken";
 import Groq from "groq-sdk";
 
 const groq = new Groq({
-  apiKey: process.env.GROK_API_KEY, // FIXED !!!
+  apiKey: process.env.GROQ_API_KEY, // FIXED (Q not K)
 });
 
 // ----------------------------------------
@@ -76,12 +76,11 @@ app.get("/", (req, res) => {
   res.send("BrainBuzz backend is live!");
 });
 
-// TEST GROQ
 app.get("/test-groq", async (req, res) => {
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant", // updated model
-      messages: [{ role: "user", content: "Say hello!" }],
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: "Hello Groq!" }],
     });
 
     res.json(completion.choices[0].message);
@@ -206,43 +205,42 @@ app.get("/api/generate-questions", async (req, res) => {
       : "English";
 
   const prompt = `
-Generate EXACTLY ${count} Science MCQs on the topic "${subject}".
+Generate EXACTLY ${count} MCQs on the topic "${subject}".
 
-Return ONLY valid JSON array like this:
+Return ONLY JSON:
 [
   {
-    "q": "question",
-    "options": ["A","B","C","D"],
-    "answer": "A",
-    "explain": "brief explanation"
+    "q": "question?",
+    "options": ["option1", "option2", "option3", "option4"],
+    "answerIndex": 0,
+    "explain": "short explanation"
   }
 ]
 
 Rules:
-- MUST be SCIENCE ONLY.
-- MUST generate EXACTLY ${count} questions.
-- NO math-only filler like "1+1=?".
-- NO markdown or extra text.
+- Do NOT include A., B., C., D.
+- Only raw text options.
+- answerIndex MUST be 0,1,2 or 3.
+- EXACTLY ${count} MCQs.
+- ONLY JSON. No markdown, no commentary.
 Language: ${languageNote}.
 `;
 
   try {
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant", // FINAL VALID MODEL
+      model: "llama-3.1-8b-instant",
       temperature: 0.7,
       messages: [
         {
           role: "system",
           content:
-            "You are an expert MCQ generator. You ALWAYS return the exact number of questions requested and ONLY science-related MCQs."
+            "You generate clean JSON MCQs with answerIndex. No letters like A/B/C."
         },
         { role: "user", content: prompt },
       ],
     });
 
     const raw = completion.choices[0].message.content;
-
-    // Extract JSON safely
     let json = raw.match(/(\[.*\])/s);
     json = json ? json[1] : raw;
 
@@ -259,4 +257,3 @@ Language: ${languageNote}.
 app.listen(PORT, () =>
   console.log(`✔ Server running at http://localhost:${PORT}`)
 );
-
