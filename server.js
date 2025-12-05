@@ -84,6 +84,14 @@ app.get("/test-groq", async (req, res) => {
     res.json({ error: err.message });
   }
 });
+app.get("/models", async (req, res) => {
+  try {
+    const models = await groq.models.list();
+    res.json(models);
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
 
 
 // ========================================
@@ -227,6 +235,7 @@ Language: ${languageNote}
 // START SERVER
 // ----------------------------------------
 app.listen(PORT, () => console.log(`✔ Server running at http://localhost:${PORT}`));
+
 
 
 
