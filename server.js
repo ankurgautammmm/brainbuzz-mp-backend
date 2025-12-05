@@ -9,25 +9,17 @@ import morgan from "morgan";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-// ----------------------------------------
-// GROQ AI IMPORT (CORRECT)
-// ----------------------------------------
 import Groq from "groq-sdk";
 
 const groq = new Groq({
   apiKey: process.env.GROK_API_KEY,
 });
 
-// ----------------------------------------
-// MODELS
-// ----------------------------------------
+
 import User from "./models/User.js";
 import Profile from "./models/Profile.js";
 import Attempt from "./models/Attempt.js";
 
-// ----------------------------------------
-// MONGODB CONNECTION
-// ----------------------------------------
 const mongoURI = process.env.MONGO_URI;
 
 if (!mongoURI) {
@@ -53,9 +45,7 @@ app.use(morgan("dev"));
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// ----------------------------------------
-// AUTH MIDDLEWARE
-// ----------------------------------------
+
 function auth(req, res, next) {
   const header = req.headers.authorization;
   if (!header) return res.status(401).json({ error: "Missing token" });
@@ -69,9 +59,6 @@ function auth(req, res, next) {
   });
 }
 
-// ----------------------------------------
-// BASIC ROUTES
-// ----------------------------------------
 app.get("/", (req, res) => {
   res.send("BrainBuzz backend is live!");
 });
@@ -89,9 +76,7 @@ app.get("/test-groq", async (req, res) => {
   }
 });
 
-// ========================================
-// SIGNUP
-// ========================================
+
 app.post("/api/signup", async (req, res) => {
   const { username, password } = req.body;
 
@@ -106,9 +91,7 @@ app.post("/api/signup", async (req, res) => {
   res.json({ ok: true });
 });
 
-// ========================================
-// LOGIN
-// ========================================
+
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -123,17 +106,13 @@ app.post("/api/login", async (req, res) => {
   res.json({ ok: true, token, username });
 });
 
-// ========================================
-// GET PROFILE
-// ========================================
+
 app.get("/api/profile", auth, async (req, res) => {
   const profile = await Profile.findOne({ username: req.user.username });
   res.json(profile);
 });
 
-// ========================================
-// UPDATE PROFILE
-// ========================================
+
 app.put("/api/profile", auth, async (req, res) => {
   await Profile.findOneAndUpdate(
     { username: req.user.username },
@@ -143,9 +122,7 @@ app.put("/api/profile", auth, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ========================================
-// SAVE QUIZ ATTEMPT
-// ========================================
+
 app.post("/api/attempts", auth, async (req, res) => {
   const attempt = await Attempt.create({
     username: req.user.username,
@@ -155,17 +132,13 @@ app.post("/api/attempts", auth, async (req, res) => {
   res.json({ ok: true, attempt });
 });
 
-// ========================================
-// GET ALL ATTEMPTS OF USER
-// ========================================
+
 app.get("/api/attempts", auth, async (req, res) => {
   const attempts = await Attempt.find({ username: req.user.username });
   res.json(attempts);
 });
 
-// ========================================
-// LEADERBOARD
-// ========================================
+
 app.get("/api/leaderboard", async (req, res) => {
   const attempts = await Attempt.find();
 
@@ -191,9 +164,7 @@ app.get("/api/leaderboard", async (req, res) => {
   res.json(leaderboard);
 });
 
-// ========================================
-// AI MCQ GENERATOR (FINAL WORKING VERSION)
-// ========================================
+
 app.get("/api/generate-questions", async (req, res) => {
   const { subject, count = 10, lang = "english" } = req.query;
 
@@ -251,10 +222,9 @@ Language: ${languageNote}.
   }
 });
 
-// ----------------------------------------
-// START SERVER
-// ----------------------------------------
+
 app.listen(PORT, () =>
   console.log(`✔ Server running at http://localhost:${PORT}`)
 );
+
 
