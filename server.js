@@ -70,8 +70,8 @@ app.get("/", (req, res) => {
 app.get("/test-groq", async (req, res) => {
   try {
     const completion = await groq.chat.completions.create({
-      model: "llamamodel3-8b"
-",
+      model: "llama3-8b"
+
       messages: [{ role: "user", content: "Say hello" }],
     });
 
