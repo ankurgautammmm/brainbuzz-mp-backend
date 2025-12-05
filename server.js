@@ -67,6 +67,18 @@ function auth(req, res, next) {
 app.get("/", (req, res) => {
   res.send("BrainBuzz backend is live!");
 });
+app.get("/test-groq", async (req, res) => {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: "llama3-8b-8192",
+      messages: [{ role: "user", content: "Say hello" }],
+    });
+
+    res.json(completion.choices[0].message);
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
 
 
 // ========================================
@@ -190,7 +202,8 @@ Language: ${languageNote}
 
   try {
     const completion = await groq.chat.completions.create({
-      model: "grok-beta",
+      model:  "llama3-8b-8192",
+
       messages: [{ role: "user", content: prompt }],
     });
 
