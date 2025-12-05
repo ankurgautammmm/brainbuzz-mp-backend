@@ -15,7 +15,7 @@ import jwt from "jsonwebtoken";
 import Groq from "groq-sdk";
 
 const groq = new Groq({
-  apiKey: process.env.GROK_API_KEY,
+  apiKey: process.env.GROQ_API_KEY, // FIXED !!!
 });
 
 // ----------------------------------------
@@ -36,7 +36,11 @@ if (!mongoURI) {
 }
 
 mongoose
-  .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true, dbName: "brainbuzz" })
+  .connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    dbName: "brainbuzz",
+  })
   .then(() => console.log("✔ MongoDB Connected"))
   .catch((err) => console.error("❌ MongoDB Error:", err));
 
@@ -64,14 +68,20 @@ function auth(req, res, next) {
     next();
   });
 }
+
+// ----------------------------------------
+// BASIC ROUTES
+// ----------------------------------------
 app.get("/", (req, res) => {
   res.send("BrainBuzz backend is live!");
 });
+
+// TEST GROQ
 app.get("/test-groq", async (req, res) => {
   try {
     const completion = await groq.chat.completions.create({
-      model: "mixtral-8x7b-32768",
-      messages: [{ role: "user", content: "Say hello" }],
+      model: "llama-3.1-8b-instant", // updated model
+      messages: [{ role: "user", content: "Say hello!" }],
     });
 
     res.json(completion.choices[0].message);
@@ -79,7 +89,6 @@ app.get("/test-groq", async (req, res) => {
     res.json({ error: err.message });
   }
 });
-
 
 // ========================================
 // SIGNUP
@@ -127,7 +136,11 @@ app.get("/api/profile", auth, async (req, res) => {
 // UPDATE PROFILE
 // ========================================
 app.put("/api/profile", auth, async (req, res) => {
-  await Profile.findOneAndUpdate({ username: req.user.username }, req.body, { new: true });
+  await Profile.findOneAndUpdate(
+    { username: req.user.username },
+    req.body,
+    { new: true }
+  );
   res.json({ ok: true });
 });
 
@@ -160,7 +173,8 @@ app.get("/api/leaderboard", async (req, res) => {
   const grouped = {};
 
   attempts.forEach((a) => {
-    if (!grouped[a.username]) grouped[a.username] = { played: 0, total: 0, best: 0 };
+    if (!grouped[a.username])
+      grouped[a.username] = { played: 0, total: 0, best: 0 };
     grouped[a.username].played++;
     grouped[a.username].total += a.scorePct;
     grouped[a.username].best = Math.max(grouped[a.username].best, a.scorePct);
@@ -179,7 +193,7 @@ app.get("/api/leaderboard", async (req, res) => {
 });
 
 // ========================================
-// AI MCQ GENERATOR (WORKING VERSION)
+// AI MCQ GENERATOR (FINAL WORKING VERSION)
 // ========================================
 app.get("/api/generate-questions", async (req, res) => {
   const { subject, count = 10, lang = "english" } = req.query;
@@ -192,38 +206,56 @@ app.get("/api/generate-questions", async (req, res) => {
       : "English";
 
   const prompt = `
-Generate ${count} MCQs on the topic "${subject}".
-Return ONLY pure JSON array like:
+Generate EXACTLY ${count} Science MCQs on the topic "${subject}".
+
+Return ONLY valid JSON array like this:
 [
-  { "q": "...", "options": ["A","B","C","D"], "answer": "A", "explain": "..." }
+  {
+    "q": "question",
+    "options": ["A","B","C","D"],
+    "answer": "A",
+    "explain": "brief explanation"
+  }
 ]
-Language: ${languageNote}
+
+Rules:
+- MUST be SCIENCE ONLY.
+- MUST generate EXACTLY ${count} questions.
+- NO math-only filler like "1+1=?".
+- NO markdown or extra text.
+Language: ${languageNote}.
 `;
 
   try {
     const completion = await groq.chat.completions.create({
-      model:  "llama3-8b-8192",
-
-      messages: [{ role: "user", content: prompt }],
+      model: "llama-3.1-8b-instant", // FINAL VALID MODEL
+      temperature: 0.7,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert MCQ generator. You ALWAYS return the exact number of questions requested and ONLY science-related MCQs."
+        },
+        { role: "user", content: prompt },
+      ],
     });
 
     const raw = completion.choices[0].message.content;
+
+    // Extract JSON safely
     let json = raw.match(/(\[.*\])/s);
     json = json ? json[1] : raw;
 
-    res.json(JSON.parse(json));
+    return res.json(JSON.parse(json));
   } catch (e) {
     console.log("AI Error:", e.message);
-    res.json([]);
+    return res.json([]);
   }
 });
 
 // ----------------------------------------
 // START SERVER
 // ----------------------------------------
-app.listen(PORT, () => console.log(`✔ Server running at http://localhost:${PORT}`));
-
-
-
-
-
+app.listen(PORT, () =>
+  console.log(`✔ Server running at http://localhost:${PORT}`)
+);
