@@ -15,7 +15,7 @@ import jwt from "jsonwebtoken";
 import Groq from "groq-sdk";
 
 const groq = new Groq({
-  apiKey: process.env.GROK_API_KEY,
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 // ----------------------------------------
@@ -70,24 +70,11 @@ app.get("/", (req, res) => {
 app.get("/test-groq", async (req, res) => {
   try {
     const completion = await groq.chat.completions.create({
-  model: "mixtral-8x7b",
-  messages: [
-    {
-      role: "user",
-      content: "Say hello"
-    }
-  ]
-});
+      model: "llama3-8b-8192",
+      messages: [{ role: "user", content: "Say hello" }],
+    });
 
     res.json(completion.choices[0].message);
-  } catch (err) {
-    res.json({ error: err.message });
-  }
-});
-app.get("/models", async (req, res) => {
-  try {
-    const models = await groq.models.list();
-    res.json(models);
   } catch (err) {
     res.json({ error: err.message });
   }
@@ -235,8 +222,3 @@ Language: ${languageNote}
 // START SERVER
 // ----------------------------------------
 app.listen(PORT, () => console.log(`✔ Server running at http://localhost:${PORT}`));
-
-
-
-
-
